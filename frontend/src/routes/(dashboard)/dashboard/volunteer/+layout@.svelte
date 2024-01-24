@@ -1,14 +1,17 @@
 <script>
 	import { AppRail, AppRailTile, AppRailAnchor, Avatar, AppShell } from '@skeletonlabs/skeleton';
-	import {onMount} from 'svelte'
+	import { onMount } from 'svelte';
 	import '../../../../app.postcss';
-	import { dataDash } from '$lib/scripts/dataDash';
+	import { dataDash } from '$lib/stores/dataDash';
+	import CheckAuth from '../../../../lib/component/checkAuth.svelte';
+	import { deleteCookie } from 'svelte-cookie';
+	import {goto} from '$app/navigation';
 	//import "bootstrap-icons/font/bootstrap-icons.min.css"
 	let currentTile = 0;
 	let previous;
 
 	onMount(() => {
-		dataDash.subscribe(value => {
+		dataDash.subscribe((value) => {
 			currentTile = value;
 			//console.log(value);
 		});
@@ -16,11 +19,16 @@
 
 	$: {
 		if (currentTile !== previous) {
-			dataDash.set(currentTile)
+			dataDash.set(currentTile);
 		}
 	}
+	 function signOut() {
+		deleteCookie('token');
+		goto('/');
+	 }
 </script>
 
+<CheckAuth />
 <AppShell>
 	<svelte:fragment slot="sidebarLeft">
 		<AppRail>
@@ -76,9 +84,12 @@
 			</AppRailTile>
 			<!-- --- -->
 			<svelte:fragment slot="trail">
-				<AppRailAnchor href="/" title="Account">Sign Out</AppRailAnchor>
+				<AppRailAnchor href="/auth/signout" title="Account">Sign Out</AppRailAnchor>
 			</svelte:fragment>
 		</AppRail>
 	</svelte:fragment>
 	<slot />
 </AppShell>
+
+<style>
+</style>

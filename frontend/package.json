@@ -33,9 +33,13 @@
   "type": "module",
   "dependencies": {
     "@floating-ui/dom": "1.5.4",
+    "axios": "^1.6.5",
     "bootstrap-icons": "^1.11.3",
+    "express-validator": "^7.0.1",
     "highlight.js": "11.9.0",
     "html5-qrcode": "^2.3.8",
-    "qrcode": "^1.5.3"
+    "jsonwebtoken": "^9.0.2",
+    "qrcode": "^1.5.3",
+    "svelte-cookie": "^1.0.1"
   }
 }

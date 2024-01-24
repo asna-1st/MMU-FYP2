@@ -1,11 +1,23 @@
 <script>
-    /** @type {import('./$types').PageData} */
-    //export let data;
-    
+	import CardSchedule from './cardSchedule.svelte';
+	/** @type {import('./$types').PageData} */
+	//export let data;
 </script>
 
-<div class="container h-full mx-auto flex flex-col justify-center ">
-	<div class="mb-5">
-		<h1 class="h1">Find Volunteer Oppurtinities</h1>
+<div class="grid gap-4 grid-cols-2">
+	<div class="">
+		<CardSchedule />
+	</div>
+	<div class="">
+		<CardSchedule />
+	</div>
+	<div class="">
+		<CardSchedule />
+	</div>
+	<div class="">
+		<CardSchedule />
+	</div>
+	<div class="">
+		<CardSchedule />
 	</div>
 </div>
