@@ -4,7 +4,7 @@
 	import '../../../../app.postcss';
 	import { dataDash } from '$lib/stores/dataDash';
 	import CheckAuth from '../../../../lib/component/checkAuth.svelte';
-	import { deleteCookie } from 'svelte-cookie';
+	import { setCookie } from 'svelte-cookie';
 	import {goto} from '$app/navigation';
 	//import "bootstrap-icons/font/bootstrap-icons.min.css"
 	let currentTile = 0;
@@ -23,8 +23,8 @@
 		}
 	}
 	 function signOut() {
-		deleteCookie('token');
-		goto('/');
+		setCookie('token', 0, 0, true);
+        goto('/')
 	 }
 </script>
 
@@ -84,7 +84,7 @@
 			</AppRailTile>
 			<!-- --- -->
 			<svelte:fragment slot="trail">
-				<AppRailAnchor href="/auth/signout" title="Account">Sign Out</AppRailAnchor>
+				<AppRailAnchor href="#" on:click={() => signOut()} title="Account">Sign Out</AppRailAnchor>
 			</svelte:fragment>
 		</AppRail>
 	</svelte:fragment>
