@@ -2,11 +2,13 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { blur, crossfade, fade } from 'svelte/transition';
 	import { dataDash } from '$lib/stores/dataDash.js';
-	import EventList from '../../../../lib/component/navigation/volunteer/eventList.svelte';
+	import EventList from '../../../../lib/component/navigation/volunteer/eventListOrg.svelte';
 	import ScheduleList from '../../../../lib/component/navigation/volunteer/scheduleList.svelte';
-	import EditProfile from '../../../../lib/component/navigation/volunteer/editProfile.svelte';
+	import TestQr from '../../../../lib/component/TestQR.svelte';
+	import EditProfileOrg from '../../../../lib/component/navigation/volunteer/editProfileOrg.svelte';
+	import Analystics from '../../../../lib/component/navigation/volunteer/analystics.svelte';
 
-	const views = [EventList, ScheduleList, EditProfile];
+	const views = [EventList, TestQr, Analystics, EditProfileOrg];
 
 	let pageData;
 
@@ -38,3 +40,7 @@
 		<svelte:component this={viewportComponent}></svelte:component>
 	</div>
 {/if}
+
+<style>
+	
+</style>

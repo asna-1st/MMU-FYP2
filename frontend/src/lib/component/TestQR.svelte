@@ -1,5 +1,5 @@
 <script>
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import { writable } from 'svelte/store';
 	import { slide, fade, fly } from 'svelte/transition';
 	import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
@@ -13,10 +13,11 @@
 	let dataScan;
 	let state = writable({ isScanning: false });
 	let userID, scheduleID;
-	let children = [{ username: 'testname', schedule: 'checkin' }];
+	let children = [{ username: 'Ahmad', schedule: 'Check-In' }];
 
 	onMount(async () => {
 		// Fetch available cameras
+		//Temp disable
 		cameras = await Html5Qrcode.getCameras();
 	});
 
@@ -116,6 +117,10 @@
 			});
 		}
 	};
+
+	onDestroy(async () => {
+
+	});
 </script>
 
 <div class="flex flex-col items-center justify-center pt-10">

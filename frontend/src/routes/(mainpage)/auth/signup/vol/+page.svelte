@@ -60,9 +60,13 @@
   </header>
   <div class="card p-6 space-y-6 shadow-xl text-left">
     <form class="space-y-4">
+		<label class="label">
+			<span>Name</span>
+			<input type="email" placeholder="Your Name" class="input" bind:value={email}/>
+		  </label>
       <label class="label">
         <span>Email</span>
-        <input type="email" placeholder="your-email@example.com" class="input" bind:value={email}/>
+        <input type="email" placeholder="Your email" class="input" bind:value={email}/>
       </label>
       <label class="label">
         <span>Password</span>
@@ -72,23 +76,21 @@
         <span>Re-Type Password</span>
         <input type="password" placeholder="Your password" class="input" bind:value={password}/>
       </label>
-      <label class="label">
+      <!-- <label class="label">
         <span>Address</span>
-        <input type="text" placeholder="Address" class="input" bind:value={address}/>
-      </label>
+        <textarea placeholder="Address" class="textarea" bind:value={address} rows="4"/>
+      </label> -->
       <label class="label">
         <span>Country</span>
-        <input type="text" placeholder="Country" class="input" bind:value={country}/>
+		<select class="select">
+			<option value="1">Malaysia</option>
+			<option value="2">Option 2</option>
+			<option value="3">Option 3</option>
+			<option value="4">Option 4</option>
+			<option value="5">Option 5</option>
+		</select>
       </label>
-      <label class="label">
-        <span>State</span>
-        <input type="text" placeholder="State" class="input" bind:value={countryState}/>
-      </label>
-      <label class="label">
-        <span>Postcode</span>
-        <input type="text" placeholder="Postcode" class="input" bind:value={countryPostcode}/>
-      </label>
-      <button class="btn variant-filled-primary w-full">Login</button>
+      <button class="btn variant-filled-primary w-full">Register</button>
     </form>
   </div>
 </div>
