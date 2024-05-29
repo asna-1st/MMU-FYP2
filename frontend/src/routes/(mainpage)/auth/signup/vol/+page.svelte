@@ -62,7 +62,7 @@
     <form class="space-y-4">
 		<label class="label">
 			<span>Name</span>
-			<input type="email" placeholder="Your Name" class="input" bind:value={email}/>
+			<input type="email" placeholder="Your Name" class="input" bind:value={fullName}/>
 		  </label>
       <label class="label">
         <span>Email</span>

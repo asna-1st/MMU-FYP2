@@ -5,6 +5,7 @@
 	import { goto } from '$app/navigation';
 	import axiosInstance from '../../../scripts/axiosInstance';
 	import { getCookie } from 'svelte-cookie';
+	import {DateTime} from 'luxon';
 
 	//let events = [];
 	//let isLoading = false;
@@ -15,7 +16,7 @@
 	let isLoading = false;
 	let lastScrollTop = 0;
 
-	async function fetchData() {
+	/* async function fetchData() {
 		try {
 			isLoading = true;
 			const resp = await axiosInstance.get(`/event/list?page=${page}`, {
@@ -25,8 +26,26 @@
 			});
 			const data = resp.data;
 			console.log(data);
-			events = [...events, ...data.events];
+			events = [...data.events];
 			page++;
+		} catch (err) {
+			console.error('Error fetching data:', err);
+		} finally {
+			isLoading = false;
+		}
+	} */
+
+	async function fetchData() {
+		try {
+			isLoading = true;
+			const resp = await axiosInstance.post(`/event/list`, null, {
+				headers: {
+					Authorization: `Bearer ${token}`
+				}
+			});
+			const data = resp.data;
+			console.log(data);
+			events = [...data.events];
 		} catch (err) {
 			console.error('Error fetching data:', err);
 		} finally {
@@ -106,6 +125,11 @@
 		timeout: 3000
 	};
 
+	const toastEventDeleted = {
+		message: 'Event has been created.',
+		timeout: 3000
+	};
+
 	const modalCreate = async () => {
 		const c = { ref: ModalCreateEvent };
 		const modal = {
@@ -131,6 +155,39 @@
 		};
 		modalStore.trigger(modal);
 	};
+
+	async function modalCreateConfirmation(eventID) {
+		const modal = {
+			type: 'confirm',
+			title: 'Delete Confirmation',
+			body: 'Are you sure to delete this event',
+			response: async (r) => {
+				if (r) {
+					try {
+						const resp = await axiosInstance.post(
+							'/event/delete',
+							{ eventID: eventID },
+							{
+								headers: {
+									Authorization: `Bearer ${token}`
+								}
+							}
+						);
+						if (resp.data.success == true) {
+							fetchData();
+							toastStore.trigger(toastEventDeleted);
+						}
+					} catch (err) {}
+				}
+			}
+		};
+		modalStore.trigger(modal);
+	}
+
+	function convertDateString(dateTime) {
+		const date = DateTime.fromISO(dateTime);
+		return date.toFormat('d LLLL y');
+	}
 </script>
 
 <main class="container mx-auto mt-8 p-4" style="overflow-y: hidden;">
@@ -138,23 +195,23 @@
 	<button type="button" class="btn variant-filled-primary mb-4" on:click={modalCreate}
 		>Create</button
 	>
-	<div style="height: 100vh; overflow-y: auto;" on:scroll={handleScroll}>
+	<div style="height: 100vh; overflow-y: auto;">
 		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
 			{#each events as event (event._id)}
 				<div class="bg-white card card-hover overflow-hidden shadow-md variant-filled">
 					<div class="p-4">
 						<h2 class="text-2xl font-semibold mb-2">{event.Name}</h2>
-						<p class="">Start Date: {event.StartDate}</p>
-						<p class="">End Date: {event.EndDate}</p>
+						<p class="">Start Date: {convertDateString(event.StartDate)}</p>
+						<p class="">End Date: {convertDateString(event.EndDate)}</p>
 						<div class="inline-block float-right mt-3">
 							<button
 								on:click={() => {
-									goto('/chat/testUI/testEventJobOrg');
+									goto('/organization/event/' + event._id);
 								}}
 								class="btn variant-filled-primary mb-2">View</button
 							>
-							<button class="btn variant-filled-primary mb-2">Chat</button>
-							<button class="btn variant-filled-error mb-2">Remove</button>
+							<button class="btn variant-filled-primary mb-2" on:click={goto('/chat/' + event._id)}>Chat</button>
+							<button class="btn variant-filled-error mb-2" on:click={() => modalCreateConfirmation(event._id)}>Remove</button>
 						</div>
 					</div>
 				</div>

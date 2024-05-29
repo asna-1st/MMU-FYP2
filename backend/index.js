@@ -18,6 +18,7 @@ app.use(cors({
 }));
 
 mongoose.connect('mongodb://127.0.0.1:27017/devTestFYP');
+initSocket(ioserver);
 
 const generateQRRoute = require('./routes/generateQR')
 const decodeQRQRRoute = require('./routes/decodeQR')
@@ -26,15 +27,23 @@ const signinRoute = require('./routes/signin');
 const chatHistory = require('./routes/chat');
 const scheduleToute = require('./routes/schedule');
 const eventRoute = require('./routes/event');
+const attendanceRoute = require('./routes/attendance');
+const reportRoute = require('./routes/report');
+const userRoute = require('./routes/user');
+const analyticsRoute = require('./routes/analytics')
+
 app.use("/", generateQRRoute);
 app.use("/", decodeQRQRRoute);
 app.use("/", signupRoute);
 app.use("/", signinRoute);
 app.use("/chat", chatHistory);
-app.use("/", scheduleToute);
+app.use("/schedule", scheduleToute);
 app.use("/event", eventRoute);
+app.use("/attendance", attendanceRoute);
+app.use("/report", reportRoute);
+app.use("/user", userRoute);
+app.use("/analytics", analyticsRoute);
 
-initSocket(ioserver);
 //initData();
 ioserver.listen(8083, () => {
   console.log(`Server is running on port 8083`);

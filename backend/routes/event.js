@@ -27,7 +27,7 @@ router.post("/create", jwtVerify([0]), async (req, res) => {
     }
 });
 
-router.get("/list", jwtVerify([0]), async (req, res) => {
+/* router.get("/list", jwtVerify([0]), async (req, res) => {
     try {
         const page = req.query.page || 1;
         const limit = 10;
@@ -39,6 +39,81 @@ router.get("/list", jwtVerify([0]), async (req, res) => {
             events
         });
     } catch (error) {
+        console.log(err);
+        res.status(500).json({ error: 'Internal Server Error' })
+    }
+}); */
+
+router.post("/list", jwtVerify([0]), async (req, res) => {
+    try {
+        const events = await eventDB.find({ OrganizationID: res.locals.userID });
+
+        res.status(200).json({
+            events
+        });
+    } catch (error) {
+        console.log(err);
+        res.status(500).json({ error: 'Internal Server Error' })
+    }
+});
+
+router.post("/available", jwtVerify([1]), async (req, res) => {
+    try {
+        const events = await eventDB.find({});
+
+        res.status(200).json({
+            events
+        });
+    } catch (error) {
+        console.log(err);
+        res.status(500).json({ error: 'Internal Server Error' })
+    }
+});
+
+router.post('/detail', jwtVerify([0, 1]), async (req, res) => {
+    try {
+        console.log(req.body);
+        const {eventID} = req.body;
+
+        const eventDetail = await eventDB.findById(eventID);
+
+        res.status(200).json({eventDetail});
+    } catch (err) {
+        res.status(500).json({ error: 'Internal Server Error' })
+    }
+});
+
+router.post("/delete", jwtVerify([0]), async (req, res) => {
+    try {
+        console.log(req.body);
+        const { eventID } = req.body;
+
+        await eventDB.findByIdAndDelete(eventID)
+
+        res.status(201).json({ success: true });
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ error: 'Internal Server Error' })
+    }
+});
+
+router.post("/edit", jwtVerify([0]), async (req, res) => {
+    try {
+        console.log(req.body);
+        const { eventID, eventName, description, startDate, endDate, address, country } = req.body;
+
+        await eventDB.findByIdAndUpdate(eventID,
+            {
+                Name: eventName,
+                Description: description,
+                StartDate: startDate,
+                EndDate: endDate,
+                Address: address,
+                Country: country
+            });
+
+        res.status(201).json({ success: true });
+    } catch (err) {
         console.log(err);
         res.status(500).json({ error: 'Internal Server Error' })
     }

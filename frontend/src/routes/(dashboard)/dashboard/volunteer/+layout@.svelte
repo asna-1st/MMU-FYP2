@@ -1,5 +1,5 @@
 <script>
-	import { AppRail, AppRailTile, AppRailAnchor, Avatar, AppShell } from '@skeletonlabs/skeleton';
+	import { AppRail, AppRailTile, AppRailAnchor, Avatar, AppShell, initializeStores, Modal, Toast } from '@skeletonlabs/skeleton';
 	import { onMount } from 'svelte';
 	import '../../../../app.postcss';
 	import { dataDash } from '$lib/stores/dataDash';
@@ -8,6 +8,8 @@
 	import {goto} from '$app/navigation';
 	let currentTile = 0;
 	let previous;
+
+	initializeStores();
 
 	onMount(() => {
 		dataDash.subscribe((value) => {
@@ -28,6 +30,8 @@
 </script>
 
 <CheckAuth />
+<Modal />
+<Toast />
 <AppShell>
 	<svelte:fragment slot="sidebarLeft">
 		<AppRail>

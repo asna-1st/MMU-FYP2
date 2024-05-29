@@ -1,28 +1,43 @@
 <script>
 	import { onDestroy, onMount } from 'svelte';
+	import { getToastStore } from '@skeletonlabs/skeleton';
 	import { writable } from 'svelte/store';
 	import { slide, fade, fly } from 'svelte/transition';
 	import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 	import { backIn, bounceIn } from 'svelte/easing';
+	import axiosInstance from '../scripts/axiosInstance';
 
 	let cameras = [];
 	let selectedCameraId;
 	let html5QrCode;
 	var lastResult,
 		countResults = 0;
-	let dataScan;
-	let state = writable({ isScanning: false });
-	let userID, scheduleID;
-	let children = [{ username: 'Ahmad', schedule: 'Check-In' }];
+	let state = false;
+	let token;
+	let volunteerStatus = [];
+
+	const toastStore = getToastStore();
+
+	const toastStatus = (message) => ({
+		message: message,
+		timeout: 3000
+	});
+
+	function getCookie(name) {
+		const value = `; ${document.cookie}`;
+		const parts = value.split(`; ${name}=`);
+		if (parts.length === 2) return parts.pop().split(';').shift();
+	}
 
 	onMount(async () => {
 		// Fetch available cameras
 		//Temp disable
+		token = getCookie('token');
 		cameras = await Html5Qrcode.getCameras();
 	});
 
 	const toggleScanning = () => {
-		if ($state.isScanning) {
+		if (state == true) {
 			stopScanning();
 		} else {
 			startScanning();
@@ -30,8 +45,6 @@
 	};
 
 	const startScanning = () => {
-		//children.unshift({username: "testname" ,type: 1})
-		console.log(children);
 		if (selectedCameraId) {
 			html5QrCode = new Html5Qrcode('scanner');
 
@@ -40,7 +53,7 @@
 					selectedCameraId,
 					{
 						fps: 30,
-						qrbox: { width: 300, height: 300 },
+						qrbox: { width: 500, height: 500 },
 						formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE]
 					},
 					onScanSuccess,
@@ -67,7 +80,7 @@
 			});
 
 			observer.observe(document.getElementById('scanner'), { childList: true, subtree: true });
-			state.set({ isScanning: true });
+			state = true;
 		}
 	};
 
@@ -77,16 +90,16 @@
 			++countResults;
 			lastResult = decodedText;
 			// Handle on success condition with the decoded message.
-			//console.log(`Scan result ${decodedText}`, decodedResult);
-			decodeQR(decodedText).then((data) => {
-				children.unshift({ username: data.user_id, schedule: data.schedule_id });
-				children = children;
-				if (children.length === 5) {
-					children.pop();
-				}
-				//userID = data.user_id;
-				//scheduleID = data.schedule_id;
-			});
+			console.log(`Scan result ${decodedText}`, decodedResult);
+			// decodeQR(decodedText).then((data) => {
+			// 	children.unshift({ username: data.user_id, schedule: data.schedule_id });
+			// 	children = children;
+			// 	if (children.length === 5) {
+			// 		children.pop();
+			// 	}
+			attendance(decodedText);
+			//userID = data.user_id;
+			//scheduleID = data.schedule_id;
 		}
 	}
 
@@ -113,13 +126,51 @@
 		if (html5QrCode) {
 			html5QrCode.stop().then(() => {
 				console.log('Scanning stopped');
-				state.set({ isScanning: false });
+				state = false;
+				html5QrCode.clear();
+				html5QrCode = null;
+				lastResult = null;
+				countResults = 0;
 			});
 		}
 	};
 
-	onDestroy(async () => {
+	async function attendance(volScheduleToken) {
+		try {
+			const resp = await axiosInstance.post(
+				'/attendance',
+				{ volScheduleToken },
+				{
+					headers: {
+						Authorization: `Bearer ${token}`
+					}
+				}
+			);
 
+			const data = resp.data;
+			console.log(data);
+			console.log(data.message);
+			volunteerStatus.unshift({ volName: data.volName, attStatus: data.attStatus });
+			volunteerStatus = volunteerStatus;
+			if (volunteerStatus.length === 5) {
+				volunteerStatus.pop();
+			}
+			console.log(volunteerStatus);
+			toastStore.trigger(toastStatus(data.message));
+		} catch (err) {
+			console.error(err);
+			if (err.response.status == 400) {
+				console.log(err.response.data);
+				toastStore.trigger(toastStatus(err.response.data.message));
+			}
+		}
+	}
+
+	onDestroy(async () => {
+		html5QrCode.clear();
+		html5QrCode = null;
+		lastResult = null;
+		countResults = 0;
 	});
 </script>
 
@@ -138,7 +189,7 @@
 				</select>
 			</label>
 			<button on:click={toggleScanning} class="btn variant-filled">
-				{#if $state.isScanning}
+				{#if state == true}
 					Stop Scanning
 				{:else}
 					Start Scanning
@@ -148,10 +199,11 @@
 	</div>
 	<div class="mt-5">
 		<div class="parent" transition:fade>
-			{#each children.slice(0, 5) as child (child)}
+			{#each volunteerStatus.slice(0, 5) as child (child)}
 				<div class="child" transition:fly={{ duration: 800, x: -100 }}>
 					<div class="card variant-filled w-full p-4 mt-1 flow-root" style="width: 500px">
-						<p class="float-left">{child.username}</p>  <p class="float-right"><span class="font-bold">Status: </span> {child.schedule}</p>
+						<p class="float-left">{child.volName}</p>
+						<p class="float-right"><span class="font-bold">Status: </span> {child.attStatus}</p>
 					</div>
 				</div>
 			{/each}
@@ -184,8 +236,8 @@
 	/* Add your custom styles here */
 
 	#scanner {
-		width: 300px;
-		height: 300px;
+		width: 500px;
+		height: 500px;
 		position: relative;
 		overflow: hidden;
 		border-radius: 5px;

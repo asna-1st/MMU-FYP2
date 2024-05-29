@@ -3,9 +3,9 @@ require('dotenv').config();
 
 const jwtVerify = (allowedUserTypes) => async (req, res, next) => {
     const jwtHeader = req.header("Authorization");
+    console.log(req.header("Authorization"));
     const token = jwtHeader.split(' ')[1];
-    // req.header("User-Agent")
-    console.log(token);
+    //console.log(token);
 
     if (!jwtHeader) {
         return res.status(401).json({ message: 'Token not provided.' });
@@ -18,6 +18,7 @@ const jwtVerify = (allowedUserTypes) => async (req, res, next) => {
     try {
         const user = await jwt.verify(token, process.env.JWT_SECRETKEY);
         res.locals.userID = user.userID;
+        res.locals.userType = user.userType;
         if (!allowedUserTypes.includes(user.userType)) {
             return res.status(401).json({ message: 'User not authorized.' });
         }

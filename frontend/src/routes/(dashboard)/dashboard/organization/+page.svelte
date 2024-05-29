@@ -11,7 +11,7 @@
 	const views = [EventList, TestQr, Analystics, EditProfileOrg];
 
 	let pageData;
-
+	let previousPage;
 
 	onMount(() => {
 		dataDash.subscribe((value) => {
@@ -29,7 +29,6 @@
 	updatePage();
 </script>
 
-
 {#if viewportComponent == views[pageData]}
 	<div
 		id="viewport"
@@ -42,5 +41,4 @@
 {/if}
 
 <style>
-	
 </style>
