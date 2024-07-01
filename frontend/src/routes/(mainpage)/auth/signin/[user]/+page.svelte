@@ -88,7 +88,7 @@
 				>Login</button
 			>
 			<p class="py-2">
-				Don't have an account? <a href="/auth/signup">Register</a>
+				Don't have an account? <a href="/auth/signup/{data.UserType}">Register</a>
 			</p>
 		</div>
 	</div>
