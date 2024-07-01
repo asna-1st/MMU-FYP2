@@ -9,7 +9,7 @@ let io;
 const initSocket = (server) => {
     io = socketIO(server, {
         cors: {
-            origin: 'http://localhost:5173', // Replace with the actual origin of your SvelteKit app
+            origin: '*', // Replace with the actual origin of your SvelteKit app
             credentials: true,
             methods: ['GET', 'POST'],
             transports: ['websocket', 'polling'],
@@ -35,10 +35,10 @@ const initSocket = (server) => {
             io.to(eventID).emit('message', { username, message, createdAt });
             console.log({ username, message, createdAt })
         });
-
+        */
         socket.on('joinAtt', (volScheduleID) => {
             socket.join(volScheduleID);
-        }); */
+        });
 
         socket.on('joinRoom', async ({ eventID }) => {
             try {

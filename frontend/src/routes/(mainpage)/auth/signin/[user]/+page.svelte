@@ -24,8 +24,8 @@
 
 				const token = resp.data.token;
 
-				setCookie('token', token, '1', true);
-				setCookie('userType', 0, '1', true);
+				setCookie('token', token, '7', true);
+				setCookie('userType', 0, '7', true);
 				goto('/dashboard/organization');
 			} else if (data.UserType === 'volunteer') {
 				userType = 1;
@@ -54,10 +54,12 @@
 	};
 
 	onMount(() => {
-		// Check if the user is already authenticated
-		const token = getCookie('token');
-		if (token) {
-			window.location.href = '/dashboard';
+		const user = getCookie('userType');
+		const token = getCookie('token')
+		if (user == 1 && token) {
+			window.location.href = '/dashboard/volunteer';
+		} else if (token) {
+			window.location.href = '/dashboard/organization';
 		}
 	});
 </script>

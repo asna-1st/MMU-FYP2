@@ -34,6 +34,7 @@
   "type": "module",
   "dependencies": {
     "@floating-ui/dom": "1.5.4",
+    "@fortawesome/fontawesome-free": "^6.5.2",
     "axios": "^1.6.8",
     "bootstrap-icons": "^1.11.3",
     "express-validator": "^7.0.1",
@@ -42,6 +43,7 @@
     "jsonwebtoken": "^9.0.2",
     "leaflet": "^1.9.4",
     "luxon": "^3.4.4",
+    "qr-scanner": "^1.4.2",
     "qrcode": "^1.5.3",
     "socket.io-client": "^4.7.5",
     "svelte-cookie": "^1.0.1"

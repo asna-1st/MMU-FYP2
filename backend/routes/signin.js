@@ -4,11 +4,8 @@ const { body, validationResult } = require('express-validator');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
-const User = require('./models/userModel');
 const orgUser = require('./models/organizationModel');
 const volUser = require('./models/volunteerModel');
-require('dotenv').config();
-
 
 router.post("/signin", [
     body('email').isEmail().withMessage('Invalid email address'),

@@ -3,38 +3,62 @@ const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const bcrypt = require('bcrypt');
 
-const User = require('./models/userModel');
+const Volunteer = require('./models/volunteerModel');
+const Organization = require('./models/organizationModel');
 
 router.post("/signup", [
-    body('email').isEmail().withMessage('Invalid email address'),
+    body('userType').isIn(['volunteer', 'organization']).withMessage('Invalid user type'),
+    body('email').isEmail().withMessage('Invalid email address')
+        .custom(async (value, { req }) => {
+            const existingVolunteer = await Volunteer.findOne({ Email: value });
+            const existingOrganization = await Organization.findOne({ Email: value });
+            if (existingVolunteer || existingOrganization) {
+                throw new Error('Email already exists');
+            }
+        }),
     body('fullName').notEmpty().withMessage('Full name is required'),
     body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),
-], async(req, res) => {
+    body('country').notEmpty().withMessage('Country is required'),
+    // Additional validation for organization-specific fields
+    body('yearEstablished').if(body('userType').equals('organization')).isNumeric().withMessage('Year established must be a number'),
+    body('address').if(body('userType').equals('organization')).notEmpty().withMessage('Address is required'),
+], async (req, res) => {
     try {
-        console.log(req.body);
         const errors = validationResult(req);
-        if(!errors.isEmpty()) {
+        if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
         }
-        const { email, fullName, password, address, country, state, postcode } = req.body;
+
+        const { userType, fullName, email, password, country, yearEstablished, address } = req.body;
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const newUser = new User({
-            email,
-            fullName,
-            password: hashedPassword,
-            address,
-            country,
-            state,
-            postcode
-        });
-
-        await newUser.save();
-
-        res.status(201).json({message: 'User registered succesfully'});
+        if (userType === 'volunteer') {
+            const newVolunteer = new Volunteer({
+                Name: fullName,
+                Email: email,
+                Password: hashedPassword,
+                Country: country
+            });
+            await newVolunteer.save();
+            res.status(201).json({ message: 'Volunteer registered successfully' });
+        } else if (userType === 'organization') {
+            const newOrganization = new Organization({
+                Name: fullName,
+                Email: email,
+                YearEstablished: yearEstablished,
+                Password: hashedPassword,
+                Address: address,
+                Country: country
+            });
+            await newOrganization.save();
+            res.status(201).json({ message: 'Organization registered successfully' });
+        } else {
+            res.status(400).json({ error: 'Invalid user type' });
+        }
     } catch (error) {
-        res.status(500).json({error: 'Internal Server Error'});
+        console.error(error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 });
 

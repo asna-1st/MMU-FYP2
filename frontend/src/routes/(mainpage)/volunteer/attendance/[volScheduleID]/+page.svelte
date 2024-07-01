@@ -1,11 +1,13 @@
 <script>
-	import { onMount, onDestroy } from 'svelte';
+	import { onMount } from 'svelte';
 	import { getToastStore, getModalStore } from '@skeletonlabs/skeleton';
-	import { goto } from '$app/navigation';
+	import { writable } from 'svelte/store';
 	import QRCode from 'qrcode';
 	import axiosInstance from '../../../../../lib/scripts/axiosInstance.js';
 	import io from 'socket.io-client';
 	import ModalAttendanceStatus from '../../../../../lib/component/modal/modalAttendanceStatus.svelte';
+	import LoadingScreen from '../../../../../lib/component/LoadingScreen.svelte';
+	import utils from '../../../../../lib/scripts/utils.js';
 	export let data;
 
 	const volScheduleID = data.volScheduleID;
@@ -13,8 +15,10 @@
 	let canvas;
 	let token;
 	let statusData;
+	let attStatus;
+	const loading = writable(true);
 
-	const socket = io('http://localhost:8083');
+	const socket = io(import.meta.env.VITE_BACKEND_URL);
 
 	const toastStore = getToastStore();
 	const modalStore = getModalStore();
@@ -24,52 +28,33 @@
 		timeout: 3000
 	});
 
-	function getCookie(name) {
-		const value = `; ${document.cookie}`;
-		const parts = value.split(`; ${name}=`);
-		if (parts.length === 2) return parts.pop().split(';').shift();
-	}
-
 	function initSocket() {
 		socket.emit('joinAtt', volScheduleID)
 	}
 
 	socket.on('attendance', (data) => {
 		statusData = data;
-		console.log(statusData);
+		//console.log(statusData);
 		
 		if (statusData.volStatus === "checked-in") {
 			toastStore.trigger(toastStatus("Check-In successful."));
+			fetchAttStatus();
 		} else if (statusData.volStatus === "checked-out") {
 			toastStore.trigger(toastStatus("Check-Out successful."));
+			fetchAttStatus();
 		}
 	})
 
 	onMount(async () => {
-		token = getCookie('token');
-		initSocket()
+		token = utils.getToken();
 		await fetchScheduleData();
 		await generateQR(volScheduleID, scheduleData.eventStartDate, scheduleData.eventEndDate);
+		await fetchAttStatus();
+		initSocket();
+		loading.set(false);
 	});
 
 	async function generateQR(volScheduleID, beginDate, endDate) {
-		// const response = await fetch('http://localhost:8083/generateQR', {
-		//    method: 'POST',
-		//    mode: 'cors',
-		//    headers: {
-		//     'Content-Type': 'application/json'
-		//    },
-		//    body: JSON.stringify({user_id, schedule_id})
-		// });
-
-		// console.log(JSON.stringify({user_id, schedule_id}));
-		// const data = await response.json();
-
-		// // Clear the existing canvas
-		// if (canvas) {
-		// 	canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-		// }
-		// // Create a new canvas
 		try {
 			const resp = await axiosInstance.post(
 				'/generateQR',
@@ -82,18 +67,47 @@
 			);
 
 			const data = resp.data;
-			console.log(data);
+			//console.log(data);
 			QRCode.toCanvas(canvas, data, { errorCorrectionLevel: 'L', width: 300 }, (error) => {
 				if (error) {
 					console.error(error);
 				} else {
-					console.log('QRCode generated');
+					//console.log('QRCode generated');
 				}
 			});
 		} catch (err) {
 			console.error(err);
 		}
 	};
+
+	async function fetchAttStatus() {
+		try {
+			const resp = await axiosInstance.post(
+				'/attendance/check',
+				{ volScheduleID },
+				{
+					headers: {
+						Authorization: `Bearer ${token}`
+					}
+				}
+			);
+
+			const data = resp.data;
+			const checkedIn = data.checkedIn;
+			const checkedOut = data.checkedOut;
+			
+			if (checkedIn == true && checkedOut == false) {
+				attStatus = "In Progress";
+			} else if (checkedIn == true && checkedOut == true) {
+				attStatus = "Complete For Today";
+			} else {
+				attStatus = "Not Check-In";
+			}
+			//console.log(data);
+		} catch (err) {
+			console.error(err);
+		}
+	}
 
 	async function fetchScheduleData() {
 		try {
@@ -109,7 +123,7 @@
 
 			const data = resp.data;
 			scheduleData = data.eventData;
-			console.log(scheduleData);
+			//console.log(scheduleData);
 		} catch (err) {
 			console.error(err);
 		}
@@ -130,48 +144,35 @@
 	};
 </script>
 
-<div class="flex justify-center items-center">
-	<div class="text-center space-y-6 pt-20 rounded-none -max-ww-full md:max-w-md">
-		<p class="text-xl font-semibold">QR Attendance</p>
+<LoadingScreen {loading}/>
+<div class="flex flex-col justify-center items-center min-h-screen p-4 sm:p-6 md:p-10 space-y-6">
+	<div class="text-center space-y-6 rounded-lg w-full max-w-sm">
+		<p class="text-xl font-bold pt-6">QR Attendance</p>
 		<div class="card">
-			<div class="p-6">
-				<canvas id="canvas" bind:this={canvas}></canvas>
+			<div class="p-6 flex justify-center items-center">
+				<div class="max-w-xs">
+					<canvas id="canvas" bind:this={canvas}></canvas>
+				</div>
 			</div>
 		</div>
-		<div class="mt-3 space-y-1 text-center">
+	</div>
+	<div class="card text-left px-6 w-full max-w-lg shadow-lg rounded-lg">
+		<div class="mt-3 space-y-4">
 			{#if scheduleData}
-				<p>Event: {scheduleData.eventName}</p>
-				<p>Job: {scheduleData.scheduleName}</p>
-				<p>Date: {scheduleData.eventStartDate} - {scheduleData.eventEndDate}</p>
-				<p>Begin: {scheduleData.scheduleBeginAt}</p>
-				<p>End: {scheduleData.scheduleEndAt}</p>
-				<p>Status: Not Check-In</p>
-				<button type="button" class="btn variant-filled-primary w-full" on:click={modalAttendance}>Attendance Status</button>
+				<div class="grid grid-cols-2 gap-4 p-6">
+					<p class="font-semibold">Event:</p><p>{scheduleData.eventName}</p>
+					<p class="font-semibold">Schedule:</p><p>{scheduleData.scheduleName}</p>
+					<p class="font-semibold">Date:</p><p class="md:whitespace-nowrap">{utils.formatDateToInput(scheduleData.eventStartDate)} - {utils.formatDateToInput(scheduleData.eventEndDate)}</p>
+					<p class="font-semibold">Begin:</p><p>{utils.convertTimeInput(scheduleData.scheduleBeginAt)}</p>
+					<p class="font-semibold">End:</p><p>{utils.convertTimeInput(scheduleData.scheduleEndAt)}</p>
+					<p class="font-semibold">Status:</p><p>{attStatus}</p>
+				</div>
+				<div class="px-6 pb-6">
+					<button type="button" class="btn variant-filled-primary w-full" on:click={modalAttendance}>Attendance Status</button>
+				</div>
 			{:else}
-				<p>Loading...</p>
+				<p class="p-6">Loading...</p>
 			{/if}
 		</div>
 	</div>
 </div>
-
-<!-- <div>
-	<canvas id="canvas" bind:this={canvas}></canvas>
-	<div>
-		<label>Schedule ID:</label>
-		<input type="text" bind:value={schedule_id} /><br />
-		<label>User ID:</label>
-		<input type="text" bind:value={user_id} />
-		<button
-			type="button"
-			on:click={generateQR}>Generate</button
-		>
-	</div>
-</div>
- -->
-
-<style>
-	#canvas {
-		width: 300px;
-		height: 300px;
-	}
-</style>

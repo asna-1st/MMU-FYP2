@@ -151,3 +151,7 @@ vite.config.js.timestamp-*
 .test-tmp
 symlink-from
 .idea/
+.bac
+.vscode
+testDB.js
+initData.js

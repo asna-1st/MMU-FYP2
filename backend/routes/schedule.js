@@ -153,7 +153,7 @@ router.post("/join", jwtVerify([1]), async (req, res) => {
 router.post("/volunteer", jwtVerify([1]), async (req, res) => {
     try {
         console.log(res.locals.userID);
-        const schedule = await volunteerScheduleDB.aggregate([
+        const schedules = await volunteerScheduleDB.aggregate([
             {
                 $match: { VolunteerID: new moongose.Types.ObjectId(res.locals.userID) }
             },
@@ -168,14 +168,38 @@ router.post("/volunteer", jwtVerify([1]), async (req, res) => {
             {
                 $unwind: '$schedule'
             },
+            {
+                $lookup: {
+                    from: "events",
+                    localField: "schedule.EventID",
+                    foreignField: "_id",
+                    as: "event"
+                }
+            },
+            {
+                $addFields: {
+                    eventName: { $arrayElemAt: ["$event.Name", 0] },
+                    eventStartDate: "$event.StartDate",
+                    eventEndDate: "$event.EndDate"
+                }
+            },
+            {
+                $project: {
+                    _id: 1, // Exclude _id field if not needed
+                    eventName: 1,
+                    eventStartDate: 1,
+                    eventEndDate: 1,
+                    schedule: 1 // Include original schedule details if needed
+                }
+            }
         ]);
 
-        console.log(schedule);
+        console.log(schedules);
 
-        res.status(200).json({ schedule });
+        res.status(200).json({ schedules });
     } catch (err) {
         console.log(err);
-        res.status(500).json({ error: 'Internal Server Error' })
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 });
 

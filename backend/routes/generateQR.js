@@ -4,7 +4,6 @@ const zlib = require('zlib');
 const jwtVerify = require('./middleware/jwtVerify');
 const router = express.Router();
 
-
 router.post("/generateQR", jwtVerify([1]),async(req, res) => {
     const { volScheduleID, beginDate, endDate} = req.body;
 
@@ -23,7 +22,7 @@ router.post("/generateQR", jwtVerify([1]),async(req, res) => {
     }
 
     console.log(payload);
-    const token = jwt.sign(payload, "098dffdg9899", {algorithm: 'HS256'});
+    const token = jwt.sign(payload, process.env.JWT_SECRETKEY, {algorithm: 'HS256'});
     console.log(req.body);
     res.json(token)
 });

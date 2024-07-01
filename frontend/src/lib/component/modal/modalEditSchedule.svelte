@@ -11,15 +11,12 @@
 		description: $modalStore[0].meta.description,
 		startTime: $modalStore[0].meta.startTime,
 		endTime: $modalStore[0].meta.endTime,
-        maxVolunteer: $modalStore[0].meta.maxVolunteer,
+		maxVolunteer: $modalStore[0].meta.maxVolunteer
 	};
 
 	function onFormSubmit() {
-		//const isValid = validateForm();
-		//if (isValid) {
-			if ($modalStore[0].response) $modalStore[0].response(formData);
-			modalStore.close();
-		//}
+		if ($modalStore[0].response) $modalStore[0].response(formData);
+		modalStore.close();
 	}
 
 	const cBase = 'card p-4 w-modal shadow-xl space-y-4';
@@ -34,23 +31,23 @@
 		<form class="modal-form {cForm}">
 			<label class="label">
 				<span>Job Name</span>
-				<input class="input" type="text" bind:value={formData.scheduleName}/>
+				<input class="input" type="text" bind:value={formData.scheduleName} />
 			</label>
 			<label class="label">
 				<span>Description</span>
-				<textarea class="textarea" rows="3" bind:value={formData.description}/>
+				<textarea class="textarea" rows="3" bind:value={formData.description} />
 			</label>
 			<label class="label">
 				<span>Start</span>
-				<input class="input" type="time" bind:value={formData.startTime}/>
+				<input class="input" type="time" bind:value={formData.startTime} />
 			</label>
 			<label class="label">
 				<span>End</span>
-				<input class="input" type="time" bind:value={formData.endTime}/>
+				<input class="input" type="time" bind:value={formData.endTime} />
 			</label>
-            <label class="label">
+			<label class="label">
 				<span>Max Volunteer</span>
-				<input class="input" type="number" bind:value={formData.maxVolunteer}/>
+				<input class="input" type="number" bind:value={formData.maxVolunteer} />
 			</label>
 		</form>
 

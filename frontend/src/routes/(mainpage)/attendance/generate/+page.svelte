@@ -7,9 +7,6 @@
 	let canvas;
     let qrToken;
 
-	onMount(() => {
-		//generateQR('test.com');
-	});
 
 	const generateQR = async () => {
         const response = await fetch('http://localhost:8083/generateQR', {
@@ -24,11 +21,9 @@
         console.log(JSON.stringify({user_id, schedule_id}));
         const data = await response.json();
 
-		// Clear the existing canvas
 		if (canvas) {
 			canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
 		}
-		// Create a new canvas
 
 		QRCode.toCanvas(canvas, data, { errorCorrectionLevel: 'M', width: 300}, (error) => {
 			if (error) {
@@ -66,17 +61,3 @@
 	</div>
 
 </div>
-<!-- <div>
-	<canvas id="canvas" bind:this={canvas}></canvas>
-	<div>
-		<label>Schedule ID:</label>
-		<input type="text" bind:value={schedule_id} /><br />
-		<label>User ID:</label>
-		<input type="text" bind:value={user_id} />
-		<button
-			type="button"
-			on:click={generateQR}>Generate</button
-		>
-	</div>
-</div>
- -->

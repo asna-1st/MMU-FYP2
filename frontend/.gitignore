@@ -49,3 +49,6 @@ internal
 *.tgz
 .eslintcache
 .svelte-kit
+*.bac
+/src/routes/(mainpage)/attendance
+/src/routes/(mainpage)/event

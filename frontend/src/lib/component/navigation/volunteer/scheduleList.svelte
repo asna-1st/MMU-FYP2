@@ -4,6 +4,7 @@
 	import { onMount } from 'svelte';
 	import axiosInstance from '../../../scripts/axiosInstance';
 	import { getCookie } from 'svelte-cookie';
+	import utils from '../../../scripts/utils';
 	/** @type {import('./$types').PageData} */
 	//export let data;
 
@@ -18,7 +19,7 @@
 					Authorization: `Bearer ${token}`
 				}
 			});
-			schedules = resp.data.schedule;
+			schedules = resp.data.schedules;
 			console.log(schedules);
 		} catch (err) {
 			console.error('Error fetching data:', err);
@@ -65,32 +66,33 @@
 				</div>
 			</div>
 		{/each} -->
-		{#each schedules as schedule (schedule.schedule._id)}
+		{#each schedules as { schedule, eventName, eventStartDate, eventEndDate, _id }}
 			<div class="p-3 shadow-md card card-hover variant-filled">
-				<h3 class="text-xl font-semibold mb-2">{schedule.schedule.Name}</h3>
-				<p class="">Description: {schedule.schedule.Description}</p>
-				<p>Event: {schedule.schedule.EventID}</p>
-				<p>Time: {schedule.schedule.BeginAt}</p>
+				<h3 class="text-xl font-semibold mb-2">{schedule.Name}</h3>
+				<p>{schedule.Description}</p>
+				<p><span class="font-semibold">Event: </span>{eventName}</p>
+				<p><span class="font-semibold">Date: </span>{utils.formatDateToInput(eventStartDate)} - {utils.formatDateToInput(eventEndDate)}</p>
+				<p><span class="font-semibold">Time: </span>{utils.convertTimeInput(schedule.BeginAt)} - {utils.convertTimeInput(schedule.EndAt)}</p>
 				<div class="inline-block float-right mt-3">
 					<button
 						on:click={() => {
-							goto('/chat/' + schedule.schedule.EventID);
+							goto('/chat/' + schedule.EventID);
 						}}
 						class="btn variant-filled-primary mb-2">Chat</button
 					>
 					<button
 						on:click={() => {
-							goto('/volunteer/attendance/' + schedule._id);
+							goto('/volunteer/attendance/' + _id);
 						}}
 						class="btn variant-filled-primary mb-2">Attendance</button
 					>
 					<button
 						on:click={() => {
-							goto('/volunteer/event/' + schedule.schedule.EventID + '/swap/' + schedule._id);
+							goto('/volunteer/event/' + schedule.EventID + '/swap/' + _id);
 						}}
 						class="btn variant-filled-primary mb-2">Swap</button
 					>
-					<button on:click={() => removeSchedule(schedule._id)} class="btn variant-filled-error mb-2">Remove</button>
+					<button on:click={() => removeSchedule(_id)} class="btn variant-filled-error mb-2">Remove</button>
 				</div>
 			</div>
 		{/each}

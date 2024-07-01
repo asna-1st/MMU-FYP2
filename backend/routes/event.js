@@ -58,8 +58,14 @@ router.post("/list", jwtVerify([0]), async (req, res) => {
 });
 
 router.post("/available", jwtVerify([1]), async (req, res) => {
+    const currentDate = new Date();
     try {
-        const events = await eventDB.find({});
+        const events = await eventDB.find({
+            StartDate: { $gte: currentDate }
+        }).populate({
+            path: 'OrganizationID',
+            select: 'Name'
+        });
 
         res.status(200).json({
             events
@@ -75,8 +81,8 @@ router.post('/detail', jwtVerify([0, 1]), async (req, res) => {
         console.log(req.body);
         const {eventID} = req.body;
 
-        const eventDetail = await eventDB.findById(eventID);
-
+        const eventDetail = await eventDB.findById(eventID).populate('OrganizationID', 'Name');;
+        console.log(eventDetail)
         res.status(200).json({eventDetail});
     } catch (err) {
         res.status(500).json({ error: 'Internal Server Error' })

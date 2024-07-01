@@ -6,6 +6,7 @@
 	import axiosInstance from '../../../scripts/axiosInstance';
 	import { getCookie } from 'svelte-cookie';
 	import {DateTime} from 'luxon';
+	import { writable } from 'svelte/store';
 
 	//let events = [];
 	//let isLoading = false;
@@ -190,6 +191,7 @@
 	}
 </script>
 
+<main class="container mx-auto p-2"></main>
 <main class="container mx-auto mt-8 p-4" style="overflow-y: hidden;">
 	<h1 class="text-4xl font-bold mb-4">Event</h1>
 	<button type="button" class="btn variant-filled-primary mb-4" on:click={modalCreate}

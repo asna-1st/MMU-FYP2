@@ -7,17 +7,19 @@ const mongoose = require('mongoose');
 const { initSocket } = require('./socketio/chatSocketIO');
 const http = require('http');
 const ioserver = http.createServer(app);
-const initData = require('./initData');
+
+require('dotenv').config();
+
 app.use(morgan("tiny"));
 app.use(bodyparser.json());
 //app.use(cors({ origin: 'http://localhost:5173', credentials: true, method: 'GET,HEAD,PUT,PATCH,POST,DELETE', exposedHeaders: '*' }))
 app.use(cors({
-  origin: 'http://localhost:5173', // specify origin here
-  methods: ['GET', 'POST'], // specify allowed methods
-  allowedHeaders: ['Content-Type', 'Authorization'], // specify allowed headers
+  origin: '*',
+  methods: ['GET', 'POST'], 
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-mongoose.connect('mongodb://127.0.0.1:27017/devTestFYP');
+mongoose.connect(process.env.MONGODB_URL);
 initSocket(ioserver);
 
 const generateQRRoute = require('./routes/generateQR')
@@ -45,7 +47,7 @@ app.use("/user", userRoute);
 app.use("/analytics", analyticsRoute);
 
 //initData();
-ioserver.listen(8083, () => {
+ioserver.listen(process.env.PORT, () => {
   console.log(`Server is running on port 8083`);
 })
 

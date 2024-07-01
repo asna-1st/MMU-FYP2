@@ -8,7 +8,6 @@
 	const formData = {
 		scheduleName: '',
 		description: '',
-		date: '',
 		startTime: '',
 		endTime: '',
         maxVolunteer: '',
@@ -40,10 +39,6 @@
 			<label class="label">
 				<span>Description</span>
 				<textarea class="textarea" rows="3" bind:value={formData.description}/>
-			</label>
-			<label class="label">
-				<span>Date</span>
-				<input class="input" type="date" bind:value={formData.date}/>
 			</label>
 			<label class="label">
 				<span>Start</span>

@@ -1,8 +1,9 @@
-<!-- src/routes/events/[id]/EventDetails.svelte -->
 <script>
 	import { onMount } from 'svelte';
 	import { DateTime } from 'luxon';
 	import axiosInstance from '../../../../../lib/scripts/axiosInstance.js';
+	import { writable } from 'svelte/store';
+	import LoadingScreen from '../../../../../lib/component/LoadingScreen.svelte';
 
 	export let data;
 
@@ -10,12 +11,13 @@
 	const eventID = data.eventID;
 	let eventDetail = '';
 	let schedules = [];
-	let buttonText;
+	const loading = writable(true);
 
 	onMount(async () => {
 		token = getCookie('token');
 		await fetchEventData();
 		await fetchScheduleData();
+		loading.set(false);
 	});
 
 	function getCookie(name) {
@@ -77,13 +79,6 @@
 		return date.toFormat('d LLLL y');
 	}
 
-	function convertTimeInput(dateTime) {
-		const time = new Date(dateTime);
-		const hours = time.getHours().toString().padStart(2, '0');
-		const minutes = time.getMinutes().toString().padStart(2, '0');
-		return hours + ':' + minutes;
-	}
-
 	async function joinSchedule(scheduleID) {
 		try {
 			const resp = await axiosInstance.post(
@@ -96,10 +91,9 @@
 				}
 			);
 
-			if (resp.data.success == true) {
-				fetchScheduleData();
+			if (resp.data.success === true) {
+				await fetchScheduleData();
 			}
-			//console.log(schedules)
 		} catch (err) {
 			console.error(err);
 		}
@@ -110,44 +104,46 @@
 	}
 </script>
 
+<LoadingScreen {loading} />
 <main class="container mx-auto p-6">
 	<h1 class="text-3xl font-bold mb-4">{eventDetail.Name}</h1>
-	<div class="mb-4">
-		<p class="">Organizer: {eventDetail.OrganizationID}</p>
-		<p class="">Description: {eventDetail.Description}</p>
-		<p class="">Address: {eventDetail.Address}</p>
-		<p class="">Country: {eventDetail.Country}</p>
-		<p class="">Start Date: {convertDateString(eventDetail.StartDate)}</p>
-		<p class="">End Date: {convertDateString(eventDetail.EndDate)}</p>
-	</div>
-
+	<div class="mb-4 space-y-1">
+        <p><span class="font-semibold">Description: </span>{eventDetail.Description}</p>
+        <p><span class="font-semibold">Address: </span>{eventDetail.Address}</p>
+        <p><span class="font-semibold">Country: </span>{eventDetail.Country}</p>
+        <p><span class="font-semibold">Start Date: </span>{convertDateString(eventDetail.StartDate)}</p>
+        <p><span class="font-semibold">End Date: </span>{convertDateString(eventDetail.EndDate)}</p>
+    </div>
 	<h2 class="text-2xl font-bold mb-4 pt-5">Jobs</h2>
 	<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 		{#if isArrayEmpty(schedules)}
-			<p>No data available</p>
+			<p>No schedules or jobs available.</p>
 		{:else}
-			{#each schedules as schedule (schedule._id)}
+			{#each schedules as schedule}
 				<div class="p-6 shadow-md card variant-filled">
 					<h3 class="text-xl font-semibold mb-2">{schedule.Name}</h3>
 					<p class="">{schedule.Description}</p>
-					<p class="">Date: 20-1-2024</p>
-					<p class="">Begin: {convertTimeString(schedule.BeginAt)}</p>
-					<p class="">End: {convertTimeString(schedule.EndAt)}</p>
+					<p><span class="font-semibold">Begin: </span> {convertTimeString(schedule.BeginAt)}</p>
+					<p><span class="font-semibold">End: </span>{convertTimeString(schedule.EndAt)}</p>
 					<p class="inline-block mt-4">
-						{schedule.MaxVolunteer - schedule.volunteerCount}/{schedule.MaxVolunteer} Available
+						{#if schedule.volunteerCount === 0}
+							0/{schedule.MaxVolunteer} Available
+						{:else}
+							{schedule.volunteerCount}/{schedule.MaxVolunteer} Available
+						{/if}
 					</p>
 					<div class="inline-block float-right mt-2">
 						{#if schedule.isScheduled}
 							<button
 								class="inline-block btn variant-filled-primary float-right"
 								on:click={joinSchedule(schedule._id)}
-								disabled={isAnyScheduleJoined()}>Joined</button
+								disabled={schedule.isScheduled || isAnyScheduleJoined()}>Joined</button
 							>
 						{:else}
 							<button
 								class="inline-block btn variant-filled-primary float-right"
 								on:click={joinSchedule(schedule._id)}
-								disabled={isAnyScheduleJoined()}>Join</button
+								disabled={schedule.isScheduled || isAnyScheduleJoined()}>Join</button
 							>
 						{/if}
 					</div>
@@ -156,7 +152,3 @@
 		{/if}
 	</div>
 </main>
-
-<style>
-	/* Additional styling or customization can be added here */
-</style>

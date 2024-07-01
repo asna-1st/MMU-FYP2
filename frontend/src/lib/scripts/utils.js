@@ -1,27 +1,13 @@
-function convertDateString(dateTime) {
-    const date = DateTime.fromISO(dateTime);
-    return date.toFormat('d LLLL y');
-}
-
-function convertTimeString(dateTime) {
-    const time = DateTime.fromISO(dateTime);
-    return time.toFormat('h:mm a');
-}
+import { DateTime } from 'luxon';
 
 function convertTimeInput(dateTime) {
-    const time = new Date(dateTime);
-    const hours = time.getHours().toString().padStart(2, '0');
-    const minutes = time.getMinutes().toString().padStart(2, '0');
-    return hours + ':' + minutes;
+    const time = DateTime.fromISO(dateTime);
+    return time.toFormat('hh:mm a');
 }
 
 function formatDateToInput(date) {
-    date = new Date(date);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
-    const day = String(date.getDate()).padStart(2, '0');
-
-    return `${year}-${month}-${day}`;
+    const dt = DateTime.fromISO(date);
+    return dt.toFormat('dd LLLL yyyy');
 }
 
 function getCookie(name) {
@@ -34,5 +20,4 @@ function getToken() {
     return getCookie('token');
 }
 
-//module.exports = {getToken, convertDateString, convertTimeString};
-export default {getToken, convertDateString, convertTimeString};
+export default { getToken, formatDateToInput, convertTimeInput };

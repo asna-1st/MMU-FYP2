@@ -1,9 +1,10 @@
 <!-- src/routes/events/[id]/EventDetails.svelte -->
 <script>
 	import { onMount } from 'svelte';
-	import { DateTime } from 'luxon';
+	import { writable } from 'svelte/store';
 	import axiosInstance from '../../../../../../../lib/scripts/axiosInstance.js';
-	
+	import LoadingScreen from '../../../../../../../lib/component/LoadingScreen.svelte';
+	import utils from '../../../../../../../lib/scripts/utils.js';
 
 	export let data;
 
@@ -11,21 +12,17 @@
 	const eventID = data.eventID;
 	const volunteerScheduleID = data.volScheduleID;
 	let eventDetail = '';
+	let organizationDetail = '';
 	let schedules = [];
-	let buttonText;
+	const loading = writable(true);
 
 	onMount(async () => {
-		token = getCookie('token');
+		token = utils.getToken();
 		await fetchEventData();
 		await fetchScheduleData();
-		console.log(volunteerScheduleID)
+		console.log(volunteerScheduleID);
+		loading.set(false);
 	});
-
-	function getCookie(name) {
-		const value = `; ${document.cookie}`;
-		const parts = value.split(`; ${name}=`);
-		if (parts.length === 2) return parts.pop().split(';').shift();
-	}
 
 	async function fetchEventData() {
 		try {
@@ -41,6 +38,7 @@
 
 			const data = resp.data;
 			eventDetail = data.eventDetail;
+			organizationDetail = eventDetail.OrganizationID;
 		} catch (err) {
 			console.error(err);
 		}
@@ -60,7 +58,7 @@
 
 			const data = resp.data;
 			schedules = [...data.schedule];
-			console.log(schedules)
+			console.log(schedules);
 		} catch (err) {
 			console.error(err);
 		}
@@ -68,23 +66,6 @@
 
 	function isArrayEmpty(array) {
 		return array.length === 0;
-	}
-
-	function convertTimeString(dateTime) {
-		const time = DateTime.fromISO(dateTime);
-		return time.toFormat('h:mm a');
-	}
-
-	function convertDateString(dateTime) {
-		const date = DateTime.fromISO(dateTime);
-		return date.toFormat('d LLLL y');
-	}
-
-	function convertTimeInput(dateTime) {
-		const time = new Date(dateTime);
-		const hours = time.getHours().toString().padStart(2, '0');
-		const minutes = time.getMinutes().toString().padStart(2, '0');
-		return hours + ':' + minutes;
 	}
 
 	async function swapSchedule(scheduleID) {
@@ -102,7 +83,7 @@
 			if (resp.data.success == true) {
 				fetchScheduleData();
 			}
-			console.log(schedules)
+			console.log(schedules);
 		} catch (err) {
 			console.error(err);
 		}
@@ -113,15 +94,16 @@
 	}
 </script>
 
+<LoadingScreen {loading}/>
 <main class="container mx-auto p-6">
 	<h1 class="text-3xl font-bold mb-4">{eventDetail.Name}</h1>
-	<div class="mb-4">
-		<p class="">Organizer: {eventDetail.OrganizationID}</p>
-		<p class="">Description: {eventDetail.Description}</p>
-		<p class="">Address: {eventDetail.Address}</p>
-		<p class="">Country: {eventDetail.Country}</p>
-		<p class="">Start Date: {convertDateString(eventDetail.StartDate)}</p>
-		<p class="">End Date: {convertDateString(eventDetail.EndDate)}</p>
+	<div class="mb-4 space-y-1">
+		<p><span class="font-semibold">Organizer: </span>{organizationDetail.Name}</p>
+		<p><span class="font-semibold">Description: </span>{eventDetail.Description}</p>
+		<p><span class="font-semibold">Address: </span>{eventDetail.Address}</p>
+		<p><span class="font-semibold">Country: </span>{eventDetail.Country}</p>
+		<p><span class="font-semibold">Start Date: </span>{utils.formatDateToInput(eventDetail.StartDate)}</p>
+		<p><span class="font-semibold">End Date: </span>{utils.formatDateToInput(eventDetail.EndDate)}</p>
 	</div>
 
 	<h2 class="text-2xl font-bold mb-4 pt-5">Jobs</h2>
@@ -133,9 +115,8 @@
 				<div class="p-6 shadow-md card variant-filled">
 					<h3 class="text-xl font-semibold mb-2">{schedule.Name}</h3>
 					<p class="">{schedule.Description}</p>
-					<p class="">Date: 20-1-2024</p>
-					<p class="">Begin: {convertTimeString(schedule.BeginAt)}</p>
-					<p class="">End: {convertTimeString(schedule.EndAt)}</p>
+					<p class="">Begin: {utils.convertTimeInput(schedule.BeginAt)}</p>
+					<p class="">End: {utils.convertTimeInput(schedule.EndAt)}</p>
 					<p class="inline-block mt-4">
 						{schedule.volunteerCount}/{schedule.MaxVolunteer} Available
 					</p>
@@ -145,6 +126,11 @@
 								class="inline-block btn variant-filled-primary float-right"
 								on:click={swapSchedule(schedule._id)}
 								disabled={isAnyScheduleJoined()}>Joined</button
+							>
+						{:else if schedule.volunteerCount == schedule.MaxVolunteer}
+							<button
+								class="inline-block btn variant-filled-primary float-right"
+								on:click={swapSchedule(schedule._id)} disabled>Unvailable</button
 							>
 						{:else}
 							<button

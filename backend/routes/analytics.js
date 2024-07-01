@@ -11,7 +11,6 @@ router.get("/:organizationID", jwtVerify([0]), async (req, res) => {
         const organizationID = req.params.organizationID;
         const totalEvents = await eventDB.countDocuments({ OrganizationID: organizationID });
 
-        // Aggregate to get total joined volunteer events created by the organization
         const joinedEventsAggregate = await volunteerScheduleDB.aggregate([
             {
                 $lookup: {
@@ -45,7 +44,6 @@ router.get("/:organizationID", jwtVerify([0]), async (req, res) => {
             }
         ]);
 
-        // Aggregate to get total joined volunteers per event
         const joinedVolunteersPerEventAggregate = await volunteerScheduleDB.aggregate([
             {
                 $lookup: {
@@ -82,8 +80,6 @@ router.get("/:organizationID", jwtVerify([0]), async (req, res) => {
                 }
             }
         ]);
-
-        // Map event ids to total joined volunteers
     
         res.status(201).json({
             totalEvents: totalEvents,

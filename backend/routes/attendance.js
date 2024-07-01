@@ -1,15 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const jwtVerify = require('./middleware/jwtVerify');
-const moongose = require('mongoose');
-const eventDB = require('./models/eventModel');
 const scheduleDB = require('./models/scheduleModel');
 const volunteerScheduleDB = require('./models/volunteerScheduleModel');
 const attendanceDB = require('./models/attendance');
-const Attendance = require('./models/attendance');
 const { getIO } = require('../socketio/chatSocketIO');
 const jwt = require('jsonwebtoken');
-const VolunteerSchedule = require('./models/volunteerScheduleModel');
+const { DateTime } = require('luxon');
 
 const io = getIO();
 
@@ -50,11 +47,11 @@ router.post("/detail", jwtVerify([1]), async (req, res) => {
     }
 });
 
-function startOfDay(date) {
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-    return startOfDay;
-}
+// function startOfDay(date) {
+//     const startOfDay = new Date(date);
+//     startOfDay.setHours(0, 0, 0, 0);
+//     return startOfDay;
+// }
 
 router.post("/", jwtVerify([0]), async (req, res) => {
     try {
@@ -63,12 +60,12 @@ router.post("/", jwtVerify([0]), async (req, res) => {
         const { volScheduleToken } = req.body;
         let volScheduleID;
 
-        const decoded = jwt.verify(volScheduleToken, "098dffdg9899");
+        const decoded = jwt.verify(volScheduleToken, process.env.JWT_SECRETKEY);
 
         console.log("Decoded token:", decoded);
         volScheduleID = decoded.volScheduleID;
 
-        const currentDate = new Date();
+        const currentDate = DateTime.local() // Auto-detect timezone
 
         const volunteerSchedule = await volunteerScheduleDB.findById(volScheduleID).populate({
             path: 'ScheduleID',
@@ -87,17 +84,21 @@ router.post("/", jwtVerify([0]), async (req, res) => {
         const { StartDate, EndDate } = EventID;
         console.log(VolunteerID.Name);
 
-        if (currentDate <= StartDate || currentDate >= EndDate) {
+        const eventStartDate = DateTime.fromJSDate(StartDate);
+        const eventEndDate = DateTime.fromJSDate(EndDate);
+
+        if (currentDate <= eventStartDate || currentDate >= eventEndDate) {
             return res.status(400).json({ success: false, message: 'Attendance date is not within the event date range.' });
         }
 
+        const startOfDay = (date) => date.startOf('day').toJSDate();
         let existingAttendance = await attendanceDB.findOne({ VolunteerScheduleID: volScheduleID, Date: startOfDay(currentDate) });
 
         if (!existingAttendance) {
-            existingAttendance = new Attendance({
+            existingAttendance = new attendanceDB({
                 VolunteerScheduleID: volScheduleID,
                 Date: startOfDay(currentDate),
-                CheckIn: currentDate
+                CheckIn: currentDate.toJSDate()
             });
             await existingAttendance.save();
             io.to(volScheduleID).emit('attendance', { volStatus: 'checked-in' });
@@ -108,14 +109,14 @@ router.post("/", jwtVerify([0]), async (req, res) => {
             }
             // If check-in time is not set, update it
             if (!existingAttendance.CheckIn) {
-                existingAttendance.CheckIn = currentDate;
+                existingAttendance.CheckIn = currentDate.toJSDate();
                 await existingAttendance.save();
                 io.to(volScheduleID).emit('attendance', { volStatus: 'checked-in' });
                 return res.status(201).json({ success: true, message: 'Successfully checked in.', volName: VolunteerID.Name, attStatus: "Check-In" });
             }
             // If check-out time is not set, update it
             if (!existingAttendance.CheckOut) {
-                existingAttendance.CheckOut = currentDate;
+                existingAttendance.CheckOut = currentDate.toJSDate();
                 await existingAttendance.save();
                 io.to(volScheduleID).emit('attendance', { volStatus: 'checked-out' });
                 return res.status(201).json({ success: true, message: 'Successfully checked out.', volName: VolunteerID.Name, attStatus: "Check-Out" });
@@ -124,9 +125,11 @@ router.post("/", jwtVerify([0]), async (req, res) => {
     } catch (err) {
         console.log(err);
         if (err instanceof jwt.NotBeforeError) {
-            return res.status(400).json({ success: false, message: 'Attedance is not ready.' });
+            return res.status(400).json({ success: false, message: 'Attendance is not ready.' });
         } else if (err instanceof jwt.TokenExpiredError) {
             return res.status(400).json({ success: false, message: 'Attendance cannot be used' });
+        } else if (jwt.JsonWebTokenError) {
+            return res.status(400).json({ success: false, message: 'Not valid QR Code' });
         } else {
             return res.status(500).json({ error: 'Internal Server Error' });
         }
@@ -165,21 +168,24 @@ router.post('/status/list', jwtVerify([0, 1]), async (req, res) => {
 router.post('/manual', jwtVerify([0]), async (req, res) => {
     console.log(req.body);
 
-    const { scheduleID, date } = req.body;
-    const parsedDate = new Date(date);
-    const startOfDay = new Date(Date.UTC(parsedDate.getUTCFullYear(), parsedDate.getUTCMonth(), parsedDate.getUTCDate(), 0, 0, 0));
-    const endOfDay = new Date(Date.UTC(parsedDate.getUTCFullYear(), parsedDate.getUTCMonth(), parsedDate.getUTCDate(), 23, 59, 59));
+    const { scheduleID, date, timeZone } = req.body;
+    
+    const timeZoneToUse = timeZone || 'UTC';
+    
+    const parsedDate = DateTime.fromISO(date, { zone: timeZoneToUse });
+    
+    const startOfDay = parsedDate.startOf('day').toUTC();
+    console.log(startOfDay)
+    const endOfDay = parsedDate.endOf('day').toUTC();
+    console.log(endOfDay)
 
     try {
-        // Find all volunteers associated with the schedule
-        // Step 1: Fetch all volunteers associated with the schedule
-        const volunteerSchedules = await VolunteerSchedule.find({ ScheduleID: scheduleID }).populate('VolunteerID');
+        const volunteerSchedules = await volunteerScheduleDB.find({ ScheduleID: scheduleID }).populate('VolunteerID');
 
-        // Step 2: Fetch attendance records for the specific date
-        const attendanceRecords = await Attendance.find({
+        const attendanceRecords = await attendanceDB.find({
             Date: {
-                $gte: startOfDay,
-                $lte: endOfDay
+                $gte: startOfDay.toJSDate(),
+                $lte: endOfDay.toJSDate()
             }
         }).populate({
             path: 'VolunteerScheduleID',
@@ -188,13 +194,11 @@ router.post('/manual', jwtVerify([0]), async (req, res) => {
             }
         });
 
-        // Step 3: Create a map of volunteer schedule IDs to their attendance records
         const attendanceMap = new Map();
         attendanceRecords.forEach(record => {
             attendanceMap.set(record.VolunteerScheduleID._id.toString(), record);
         });
 
-        // Step 4: Combine the volunteer list with their attendance records
         const result = volunteerSchedules.map(volSchedule => ({
             VolunteerID: volSchedule.VolunteerID,
             Attendance: attendanceMap.has(volSchedule._id.toString())
@@ -205,19 +209,27 @@ router.post('/manual', jwtVerify([0]), async (req, res) => {
         res.status(201).json(result);
     } catch (error) {
         res.status(500).send(error);
+        console.log(error);
     }
 });
 
 router.post('/manual/toggle', jwtVerify([0]), async (req, res) => {
     console.log(req.body);
 
-    const { scheduleID, volunteerID, date } = req.body;
-    const parsedDate = new Date(date);
-    const startOfDay = new Date(Date.UTC(parsedDate.getUTCFullYear(), parsedDate.getUTCMonth(), parsedDate.getUTCDate(), 0, 0, 0));
-    const endOfDay = new Date(Date.UTC(parsedDate.getUTCFullYear(), parsedDate.getUTCMonth(), parsedDate.getUTCDate(), 23, 59, 59));
+    const { scheduleID, volunteerID, date, timeZone } = req.body;
+
+    if (!timeZone || typeof timeZone !== 'string') {
+        return res.status(400).send('Invalid or missing time zone');
+    }
+
     try {
-        // Check if the date falls within the event date range
-        const volunteerSchedule = await VolunteerSchedule.findOne({
+        const parsedDate = new Date(date);
+        const startOfDay = new Date(parsedDate.toLocaleString('en-US', { timeZone }));
+        startOfDay.setUTCHours(0, 0, 0, 0);
+        const endOfDay = new Date(parsedDate.toLocaleString('en-US', { timeZone }));
+        endOfDay.setUTCHours(23, 59, 59, 999);
+
+        const volunteerSchedule = await volunteerScheduleDB.findOne({
             ScheduleID: scheduleID,
             VolunteerID: volunteerID
         });
@@ -226,7 +238,6 @@ router.post('/manual/toggle', jwtVerify([0]), async (req, res) => {
             return res.status(404).send('Volunteer schedule not found');
         }
 
-        // Check if the date falls within the event date range
         const { ScheduleID } = volunteerSchedule;
         const schedule = await scheduleDB.findById(ScheduleID).populate('EventID');
         if (!schedule) {
@@ -240,25 +251,21 @@ router.post('/manual/toggle', jwtVerify([0]), async (req, res) => {
             return res.status(400).send('Attendance date is not within the event date range.');
         }
 
-        // Find the attendance record for the given date
-        let attendance = await Attendance.findOne({
+        let attendance = await attendanceDB.findOne({
             VolunteerScheduleID: volunteerSchedule._id,
             Date: startOfDay
         });
 
-        // If attendance record exists, toggle check-out time
         if (attendance) {
             attendance.CheckOut = attendance.CheckOut ? null : new Date();
         } else {
-            // If attendance record does not exist, create a new one with check-in time
-            attendance = new Attendance({
+            attendance = new attendanceDB({
                 VolunteerScheduleID: volunteerSchedule._id,
                 Date: startOfDay,
                 CheckIn: new Date()
             });
         }
 
-        // Save the updated or new attendance record
         await attendance.save();
         await volunteerSchedule.save();
 
@@ -266,6 +273,38 @@ router.post('/manual/toggle', jwtVerify([0]), async (req, res) => {
     } catch (error) {
         res.status(500).send(error);
         console.log(error);
+    }
+});
+
+
+router.post('/check', jwtVerify([1]), async (req, res) => {
+    console.log(req.body)
+    try {
+        const { volScheduleID } = req.body;
+
+        const today = new Date();
+        const startOfDay = new Date(today.setHours(0, 0, 0, 0));
+        const endOfDay = new Date(today.setHours(23, 59, 59, 999));
+
+        const attendances = await attendanceDB.findOne({
+            VolunteerScheduleID: volScheduleID,
+            Date: {
+                $gte: startOfDay,
+                $lte: endOfDay
+            }
+        });
+
+        if (!attendances) {
+            return res.status(200).json({ checkedIn: false, checkedOut: false });
+        }
+
+        const checkedIn = !!attendances.CheckIn;
+        const checkedOut = !!attendances.CheckOut;
+
+        res.status(201).json({checkedIn, checkedOut});
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({ error: 'Internal Server Error' });;
     }
 });
 

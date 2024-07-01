@@ -4,11 +4,12 @@
 	import { dataDash } from '$lib/stores/dataDash.js';
 	import EventList from '../../../../lib/component/navigation/volunteer/eventListOrg.svelte';
 	import ScheduleList from '../../../../lib/component/navigation/volunteer/scheduleList.svelte';
-	import TestQr from '../../../../lib/component/TestQR.svelte';
+	// import TestQr from '../../../../lib/component/TestQR.svelte';
 	import EditProfileOrg from '../../../../lib/component/navigation/volunteer/editProfileOrg.svelte';
 	import Analystics from '../../../../lib/component/navigation/volunteer/analystics.svelte';
+	import QrScanner from '../../../../lib/component/QRScanner.svelte';
 
-	const views = [EventList, TestQr, Analystics, EditProfileOrg];
+	const views = [EventList, QrScanner, Analystics, EditProfileOrg];
 
 	let pageData;
 	let previousPage;
@@ -24,6 +25,8 @@
 
 	function updatePage() {
 		viewportComponent = views[pageData];
+		console.log(viewportComponent);
+		
 	}
 
 	updatePage();

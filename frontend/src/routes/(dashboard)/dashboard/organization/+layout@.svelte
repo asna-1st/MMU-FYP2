@@ -1,11 +1,20 @@
 <script>
-	import { AppRail, AppRailTile, AppRailAnchor, Avatar, AppShell, initializeStores, Modal, Toast } from '@skeletonlabs/skeleton';
+	import {
+		AppRail,
+		AppRailTile,
+		AppRailAnchor,
+		Avatar,
+		AppShell,
+		initializeStores,
+		Modal,
+		Toast
+	} from '@skeletonlabs/skeleton';
 	import { onMount } from 'svelte';
 	import '../../../../app.postcss';
 	import { dataDash } from '$lib/stores/dataDash';
 	import CheckAuth from '../../../../lib/component/checkAuth.svelte';
 	import { setCookie } from 'svelte-cookie';
-	import {goto} from '$app/navigation';
+	import { goto } from '$app/navigation';
 	let currentTile = 0;
 	let previous;
 
@@ -14,7 +23,7 @@
 	onMount(() => {
 		dataDash.subscribe((value) => {
 			currentTile = value;
-			//console.log(value);
+			////console.log(value);
 		});
 	});
 
@@ -23,10 +32,10 @@
 			dataDash.set(currentTile);
 		}
 	}
-	 function signOut() {
+	function signOut() {
 		setCookie('token', 0, 0, true);
-        goto('/')
-	 }
+		goto('/');
+	}
 </script>
 
 <Modal />
@@ -35,8 +44,7 @@
 <AppShell>
 	<svelte:fragment slot="sidebarLeft">
 		<AppRail>
-			<svelte:fragment slot="lead">
-			</svelte:fragment>
+			<svelte:fragment slot="lead"></svelte:fragment>
 			<!-- --- -->
 			<AppRailTile bind:group={currentTile} name="tile-1" value={0} title="tile-1">
 				<svelte:fragment slot="lead">
@@ -60,13 +68,22 @@
 			<AppRailTile bind:group={currentTile} name="tile-2" value={1} title="tile-3">
 				<svelte:fragment slot="lead">
 					<div class="flex items-center justify-center">
-						<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-qr-code-scan w-6 h-6" viewBox="0 0 16 16">
-							<path d="M0 .5A.5.5 0 0 1 .5 0h3a.5.5 0 0 1 0 1H1v2.5a.5.5 0 0 1-1 0zm12 0a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-1 0V1h-2.5a.5.5 0 0 1-.5-.5M.5 12a.5.5 0 0 1 .5.5V15h2.5a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5v-3a.5.5 0 0 1 .5-.5m15 0a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1 0-1H15v-2.5a.5.5 0 0 1 .5-.5M4 4h1v1H4z"/>
-							<path d="M7 2H2v5h5zM3 3h3v3H3zm2 8H4v1h1z"/>
-							<path d="M7 9H2v5h5zm-4 1h3v3H3zm8-6h1v1h-1z"/>
-							<path d="M9 2h5v5H9zm1 1v3h3V3zM8 8v2h1v1H8v1h2v-2h1v2h1v-1h2v-1h-3V8zm2 2H9V9h1zm4 2h-1v1h-2v1h3zm-4 2v-1H8v1z"/>
-							<path d="M12 9h2V8h-2z"/>
-						  </svg>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							fill="currentColor"
+							class="bi bi-qr-code-scan w-6 h-6"
+							viewBox="0 0 16 16"
+						>
+							<path
+								d="M0 .5A.5.5 0 0 1 .5 0h3a.5.5 0 0 1 0 1H1v2.5a.5.5 0 0 1-1 0zm12 0a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-1 0V1h-2.5a.5.5 0 0 1-.5-.5M.5 12a.5.5 0 0 1 .5.5V15h2.5a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5v-3a.5.5 0 0 1 .5-.5m15 0a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1 0-1H15v-2.5a.5.5 0 0 1 .5-.5M4 4h1v1H4z"
+							/>
+							<path d="M7 2H2v5h5zM3 3h3v3H3zm2 8H4v1h1z" />
+							<path d="M7 9H2v5h5zm-4 1h3v3H3zm8-6h1v1h-1z" />
+							<path
+								d="M9 2h5v5H9zm1 1v3h3V3zM8 8v2h1v1H8v1h2v-2h1v2h1v-1h2v-1h-3V8zm2 2H9V9h1zm4 2h-1v1h-2v1h3zm-4 2v-1H8v1z"
+							/>
+							<path d="M12 9h2V8h-2z" />
+						</svg>
 					</div>
 				</svelte:fragment>
 				<span>QR Scan</span>
@@ -93,9 +110,14 @@
 			<AppRailTile bind:group={currentTile} name="tile-4" value={3} title="tile-4">
 				<svelte:fragment slot="lead">
 					<div class="flex items-center justify-center">
-						<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="w-6 h-6" viewBox="0 0 16 16">
-							<path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>
-						  </svg>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							fill="currentColor"
+							class="w-6 h-6"
+							viewBox="0 0 16 16"
+						>
+							<path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6" />
+						</svg>
 					</div>
 				</svelte:fragment>
 				<span>Profile</span>
@@ -110,5 +132,4 @@
 </AppShell>
 
 <style>
-
 </style>
