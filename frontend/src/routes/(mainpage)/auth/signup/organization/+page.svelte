@@ -38,7 +38,7 @@
 
 			const data = response.data;
 
-			if (response.status === 200) {
+			if (response.status === 201) {
 				responseMessage = data.message;
 			} else {
 				responseMessage = data.errors ? data.errors[0].msg : data.error || 'Registration failed';
