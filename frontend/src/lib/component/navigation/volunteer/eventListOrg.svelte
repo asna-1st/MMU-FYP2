@@ -127,7 +127,7 @@
 	};
 
 	const toastEventDeleted = {
-		message: 'Event has been created.',
+		message: 'Event has been deleted.',
 		timeout: 3000
 	};
 

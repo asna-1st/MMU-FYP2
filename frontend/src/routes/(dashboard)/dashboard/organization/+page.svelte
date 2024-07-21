@@ -17,7 +17,7 @@
 	onMount(() => {
 		dataDash.subscribe((value) => {
 			pageData = value;
-			console.log(value);
+			//console.log(value);
 		});
 	});
 
@@ -25,7 +25,7 @@
 
 	function updatePage() {
 		viewportComponent = views[pageData];
-		console.log(viewportComponent);
+		//console.log(viewportComponent);
 		
 	}
 

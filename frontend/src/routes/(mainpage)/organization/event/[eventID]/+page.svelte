@@ -155,7 +155,7 @@
                 if (r) {
                     try {
                         const resp = await axiosInstance.post(
-                            '/event/delete',
+                            '/schedule/delete',
                             { scheduleID: scheduleID },
                             {
                                 headers: {
